@@ -36,7 +36,7 @@ jobs:
       run: |
               label=$(date +%s)
               latest_tag="${{steps.extract_branch.outputs.branch == 'master' && '--tag ghcr.io/jeppevinkel/flow-chat:latest' || '--tag ghcr.io/jeppevinkel/flow-chat:latest-dev'}}"
-              docker build . --file Dockerfile $latest_tag --tag ghcr.io/jeppevinkel/flow-chat:${{steps.tag.outputs.new_tag}}
+              docker build . --file FlowChat/Dockerfile $latest_tag --tag ghcr.io/jeppevinkel/flow-chat:${{steps.tag.outputs.new_tag}}
               docker push --all-tags ghcr.io/jeppevinkel/flow-chat
     - name: Trigger Dev Container Recreation
       uses: distributhor/workflow-webhook@v3
