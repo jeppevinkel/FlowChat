@@ -1,0 +1,20 @@
+﻿services:
+  flowchat:
+    image: flowchat
+    build:
+      context: .
+      dockerfile: FlowChat/Dockerfile
+    environment:
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - DISCORD_TOKEN=${DISCORD_TOKEN}
+      - QDRANT_HOST=qdrant
+    volumes:
+      - ./memories:/app/memories
+      - ./config:/app/config
+    depends_on:
+      - qdrant
+  
+  qdrant:
+    image: qdrant/qdrant
+    volumes:
+      - ./qdrant-storage:/qdrant/storage:z
