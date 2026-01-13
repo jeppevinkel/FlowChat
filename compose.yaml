@@ -7,6 +7,8 @@
     environment:
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
       - DISCORD_TOKEN=${DISCORD_TOKEN}
+      - ELEVENLAB_API_KEY=${ELEVENLAB_API_KEY}
+      - ELEVENLABS_VOICE_ID=${ELEVENLABS_VOICE_ID}
       - QDRANT_HOST=qdrant
     volumes:
       - ./memories:/app/memories

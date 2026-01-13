@@ -2,17 +2,13 @@
 using Anthropic.SDK.Common;
 using Anthropic.SDK.Constants;
 using Anthropic.SDK.Messaging;
-using CliWrap;
 using Discord;
-using Discord.Audio;
 using Discord.WebSocket;
 using FlowChat.Models;
 using FlowChat.Tools;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using YoutubeExplode;
-using YoutubeExplode.Videos.Streams;
 using Tool = Anthropic.SDK.Common.Tool;
 
 namespace FlowChat.Services.Implementations;
@@ -36,6 +32,12 @@ public class DiscordService : IHostedService
         _anthropicClient = new AnthropicClient(_config.GetValue<string>("ANTHROPIC_API_KEY"));
         
         _discordClient.Log += Log;
+        _discordClient.Ready += () =>
+        {
+            _logger.LogInformation("Discord client is signed in as {Username}", _discordClient.CurrentUser.Username);
+            
+            return Task.CompletedTask;
+        };
         _discordClient.MessageReceived += message =>
         {
             Task.Run(() => OnMessageReceived(message));
@@ -86,7 +88,10 @@ public class DiscordService : IHostedService
             Tool.GetOrCreateTool(channelContext.MemoryManager, nameof(MemoryManager.ReadMemories)),
             Tool.GetOrCreateTool(channelContext.VoiceChannelTools, nameof(VoiceChannelTools.JoinVoice)),
             Tool.GetOrCreateTool(channelContext.VoiceChannelTools, nameof(VoiceChannelTools.LeaveVoice)),
-            Tool.GetOrCreateTool(channelContext.VoiceChannelTools, nameof(VoiceChannelTools.PlayMusic))
+            Tool.GetOrCreateTool(channelContext.VoiceChannelTools, nameof(VoiceChannelTools.PlayMusic)),
+            Tool.GetOrCreateTool(channelContext.VoiceChannelTools, nameof(VoiceChannelTools.SkipMusic)),
+            Tool.GetOrCreateTool(channelContext.VoiceChannelTools, nameof(VoiceChannelTools.GetQueue)),
+            Tool.GetOrCreateTool(channelContext.VoiceChannelTools, nameof(VoiceChannelTools.SayInVoiceChannel))
         ];
 
         var parameters = new MessageParameters()
@@ -123,11 +128,18 @@ public class DiscordService : IHostedService
             
             foreach (Function? toolCall in res.ToolCalls)
             {
-                var response = await toolCall.InvokeAsync<string>();
+                try
+                {
+                    var response = await toolCall.InvokeAsync<string>();
+                    
+                    _logger.LogInformation("Toolcall: {ToolName}, result: {Result}", toolCall.Name, response);
 
-                _logger.LogInformation("Toolcall: {ToolName}, result: {Result}", toolCall.Name, response);
-
-                channelContext.Messages.Add(new Message(toolCall, response));
+                    channelContext.Messages.Add(new Message(toolCall, response));
+                } catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Error invoking tool call {ToolName}", toolCall.Name);
+                    channelContext.Messages.Add(new Message(toolCall, ex.Message));
+                }
             }
 
             res = await _anthropicClient.Messages.GetClaudeMessageAsync(parameters);
@@ -136,7 +148,7 @@ public class DiscordService : IHostedService
         }
 
         _logger.LogInformation("Response: {Response}", res.Message.ToString());
-        if (!string.IsNullOrEmpty(res.Message))
+        if (!string.IsNullOrEmpty(res.Message.ToString()))
         {
             await message.Channel.SendMessageAsync(res.Message.ToString());
         }

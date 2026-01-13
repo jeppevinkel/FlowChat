@@ -20,9 +20,9 @@ class Program
 
         builder.Services.AddSingleton(discordConfig).AddSingleton<DiscordSocketClient>();
 
-        // builder.Services.AddSingleton<DiscordClient>();
         builder.Services.AddSingleton<VoiceChannelContext>();
         builder.Services.AddHostedService<DiscordService>();
+        builder.Services.AddTransient<ElevenLabsService>();
         
         builder.Services.AddSingleton<IBackgroundTaskQueue>(ctx =>
         {
@@ -30,9 +30,8 @@ class Program
                 queueCapacity = 100;
             return new BackgroundTaskQueue(queueCapacity);
         });
-
-        builder.Services.AddAsyncServiceInitialization()
-            .AddInitActionExecutor<VoiceChannelContext>();
+        
+        builder.Services.AddHostedService<VoiceChannelBackgroundService>();
 
         using IHost host = builder.Build();
         await host.RunAsync();
