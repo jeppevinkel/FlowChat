@@ -86,11 +86,12 @@ public class DiscordService : IHostedService
         [
             Tool.GetOrCreateTool(channelContext.MemoryManager, nameof(MemoryManager.StoreMemory)),
             Tool.GetOrCreateTool(channelContext.MemoryManager, nameof(MemoryManager.ReadMemories)),
-            Tool.GetOrCreateTool(channelContext.VoiceChannelTools, nameof(VoiceChannelTools.JoinVoice)),
-            Tool.GetOrCreateTool(channelContext.VoiceChannelTools, nameof(VoiceChannelTools.LeaveVoice)),
+            Tool.GetOrCreateTool(channelContext.VoiceChannelTools, nameof(VoiceChannelTools.JoinVoiceChannel)),
+            Tool.GetOrCreateTool(channelContext.VoiceChannelTools, nameof(VoiceChannelTools.LeaveVoiceChannel)),
             Tool.GetOrCreateTool(channelContext.VoiceChannelTools, nameof(VoiceChannelTools.PlayMusic)),
             Tool.GetOrCreateTool(channelContext.VoiceChannelTools, nameof(VoiceChannelTools.SkipMusic)),
             Tool.GetOrCreateTool(channelContext.VoiceChannelTools, nameof(VoiceChannelTools.GetQueue)),
+            Tool.GetOrCreateTool(channelContext.VoiceChannelTools, nameof(VoiceChannelTools.SetMusicVolume)),
             Tool.GetOrCreateTool(channelContext.VoiceChannelTools, nameof(VoiceChannelTools.SayInVoiceChannel))
         ];
 

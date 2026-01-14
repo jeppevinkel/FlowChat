@@ -13,26 +13,30 @@ class Program
     {
         HostApplicationBuilder builder = Host.CreateApplicationBuilder(args);
 
-        var discordConfig = new DiscordSocketConfig()
-        {
-            
-        };
+        var discordConfig = new DiscordSocketConfig();
 
         builder.Services.AddSingleton(discordConfig).AddSingleton<DiscordSocketClient>();
+        
+        // Register the manager as singleton
+        builder.Services.AddSingleton<GuildContextManager>();
 
-        builder.Services.AddSingleton<VoiceChannelContext>();
-        builder.Services.AddHostedService<DiscordService>();
+        // builder.Services.AddSingleton<VoiceChannelContext>();
+        // builder.Services.AddHostedService<DiscordService>();
+        
+        // Register services that can be used per-guild
         builder.Services.AddTransient<ElevenLabsService>();
         
-        builder.Services.AddSingleton<IBackgroundTaskQueue>(ctx =>
-        {
-            if (!int.TryParse(builder.Configuration["QueueCapacity"], out var queueCapacity))
-                queueCapacity = 100;
-            return new BackgroundTaskQueue(queueCapacity);
-        });
+        // builder.Services.AddSingleton<IBackgroundTaskQueue>(ctx =>
+        // {
+        //     if (!int.TryParse(builder.Configuration["QueueCapacity"], out var queueCapacity))
+        //         queueCapacity = 100;
+        //     return new BackgroundTaskQueue(queueCapacity);
+        // });
         
-        builder.Services.AddHostedService<VoiceChannelBackgroundService>();
+        // builder.Services.AddHostedService<VoiceChannelBackgroundService>();
 
+        builder.Services.AddHostedService<DiscordService>();
+        
         using IHost host = builder.Build();
         await host.RunAsync();
     }

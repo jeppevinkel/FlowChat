@@ -1,7 +1,9 @@
 ﻿using Anthropic.SDK.Messaging;
 using Discord.WebSocket;
+using FlowChat.Services.Implementations;
 using FlowChat.Tools;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 namespace FlowChat.Models;
 
@@ -15,6 +17,6 @@ public class ChannelContext
     {
         MemoryManager = new MemoryManager(message.Channel.Id);
         IServiceScope scope = services.CreateScope();
-        VoiceChannelTools = new VoiceChannelTools(message, scope.ServiceProvider.GetRequiredService<VoiceChannelContext>());
+        VoiceChannelTools = new VoiceChannelTools(message, scope.ServiceProvider.GetRequiredService<GuildContextManager>(), scope.ServiceProvider.GetRequiredService<ILogger<VoiceChannelTools>>());
     }
 }
