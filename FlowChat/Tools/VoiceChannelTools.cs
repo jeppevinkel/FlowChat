@@ -1,5 +1,5 @@
 ﻿using System.Diagnostics.CodeAnalysis;
-using System.Text;
+using System.Text.Json;
 using Anthropic.SDK.Common;
 using Discord;
 using Discord.WebSocket;
@@ -13,6 +13,12 @@ public class VoiceChannelTools
     private readonly SocketMessage _message;
     private readonly GuildContextManager _contextManager;
     private readonly ILogger<VoiceChannelTools> _logger;
+    
+    private readonly JsonSerializerOptions _jsonOptions = new()
+    {
+        WriteIndented = true,
+        Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+    };
 
     public VoiceChannelTools(SocketMessage message, GuildContextManager contextManager,
         ILogger<VoiceChannelTools> logger)
@@ -193,41 +199,14 @@ public class VoiceChannelTools
 
             var currentTrack = voiceService.GetCurrentTrack();
             var queuedTracks = voiceService.GetQueuedTracks();
-
-            StringBuilder sb = new StringBuilder();
-
-            if (currentTrack != null)
+            
+            object responseObject = new
             {
-                sb.AppendLine("Now playing:");
-                sb.AppendLine($"Title: {currentTrack.Title}");
-                sb.AppendLine($"Duration: {currentTrack.Duration?.ToString(@"mm\:ss") ?? "Unknown duration"}");
-            }
-            else
-            {
-                sb.AppendLine("No music is currently playing.");
-            }
-
-            if (queuedTracks.Count > 0)
-            {
-                sb.AppendLine();
-                sb.AppendLine("Queue:");
-                for (int i = 0; i < queuedTracks.Count; i++)
-                {
-                    var track = queuedTracks[i];
-                    sb.AppendLine($"- Title: {track.Title}");
-                    sb.AppendLine($"  Duration: {track.Duration?.ToString(@"mm\:ss") ?? "Unknown duration"}");
-                    if (i < queuedTracks.Count - 1)
-                    {
-                        sb.AppendLine();
-                    }
-                }
-            }
-            else
-            {
-                sb.AppendLine("No music is queued.");
-            }
-
-            return Task.FromResult(sb.ToString());
+                CurrentTrack = currentTrack,
+                QueuedTracks = queuedTracks
+            };
+            
+            return Task.FromResult(JsonSerializer.Serialize(responseObject, _jsonOptions));
         }
         catch (Exception e)
         {
