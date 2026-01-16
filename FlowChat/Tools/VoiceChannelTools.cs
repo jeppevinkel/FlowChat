@@ -10,7 +10,7 @@ namespace FlowChat.Tools;
 
 public class VoiceChannelTools
 {
-    private SocketMessage _message;
+    private readonly SocketMessage _message;
     private readonly GuildContextManager _contextManager;
     private readonly ILogger<VoiceChannelTools> _logger;
 
