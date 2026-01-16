@@ -85,7 +85,7 @@ public class DiscordService : IHostedService
         List<Tool> tools =
         [
             Tool.GetOrCreateTool(channelContext.MemoryManager, nameof(MemoryManager.StoreMemory)),
-            Tool.GetOrCreateTool(channelContext.MemoryManager, nameof(MemoryManager.ReadMemories)),
+            Tool.GetOrCreateTool(channelContext.MemoryManager, nameof(MemoryManager.SearchRelevantMemories)),
             Tool.GetOrCreateTool(channelContext.VoiceChannelTools, nameof(VoiceChannelTools.JoinVoiceChannel)),
             Tool.GetOrCreateTool(channelContext.VoiceChannelTools, nameof(VoiceChannelTools.LeaveVoiceChannel)),
             Tool.GetOrCreateTool(channelContext.VoiceChannelTools, nameof(VoiceChannelTools.PlayMusic)),

@@ -15,7 +15,7 @@ public class ChannelContext
 
     public ChannelContext(IServiceProvider services, SocketMessage message)
     {
-        MemoryManager = new MemoryManager(message.Channel.Id);
+        MemoryManager = new MemoryManager(message);
         IServiceScope scope = services.CreateScope();
         VoiceChannelTools = new VoiceChannelTools(message, scope.ServiceProvider.GetRequiredService<GuildContextManager>(), scope.ServiceProvider.GetRequiredService<ILogger<VoiceChannelTools>>());
     }
