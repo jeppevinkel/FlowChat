@@ -20,13 +20,45 @@ public class RollModule : InteractionModuleBase<SocketInteractionContext>
         D100 = 100
     }
 
+    public enum RollType
+    {
+        Normal,
+        Advantage,
+        Disadvantage
+    }
+
     [SlashCommand("roll", "Rolls a dnd dice")]
     [IntegrationType(ApplicationIntegrationType.UserInstall)]
     [CommandContextType(InteractionContextType.BotDm, InteractionContextType.Guild, InteractionContextType.PrivateChannel)]
-    public async Task RollCommand(DiceType dice, [Summary(description: "Reason for rolling the dice")] string? reason = null)
+    public async Task RollCommand(
+        DiceType dice, 
+        [Summary(description: "Reason for rolling the dice")] string? reason = null,
+        [Summary(description: "Roll with advantage or disadvantage")] RollType type = RollType.Normal)
     {
-        int result = _random.Next(1, (int)dice + 1);
-        string response = $"Rolling {dice}: **{result}**";
+        int firstRoll = _random.Next(1, (int)dice + 1);
+        int result = firstRoll;
+        string rollDetails = $"**{firstRoll}**";
+
+        if (type != RollType.Normal)
+        {
+            int secondRoll = _random.Next(1, (int)dice + 1);
+            if (type == RollType.Advantage)
+            {
+                result = Math.Max(firstRoll, secondRoll);
+            }
+            else
+            {
+                result = Math.Min(firstRoll, secondRoll);
+            }
+            rollDetails = $"({firstRoll}, {secondRoll}) -> **{result}**";
+        }
+
+        string response = $"Rolling {dice} with {type}: {rollDetails}";
+        if (type == RollType.Normal)
+        {
+            response = $"Rolling {dice}: {rollDetails}";
+        }
+
         if (!string.IsNullOrWhiteSpace(reason))
         {
             response += $" for {reason}";
