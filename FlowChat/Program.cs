@@ -15,7 +15,7 @@ class Program
         var discordConfig = new DiscordSocketConfig();
 
         builder.Services.AddSingleton(discordConfig).AddSingleton<DiscordSocketClient>();
-        builder.Services.AddSingleton<InteractionService>();
+        // builder.Services.AddSingleton<InteractionService>();
         
         // Register the manager as singleton
         builder.Services.AddSingleton<GuildContextManager>();

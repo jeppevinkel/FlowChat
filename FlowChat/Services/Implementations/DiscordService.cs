@@ -25,13 +25,13 @@ public class DiscordService : IHostedService
     private readonly AnthropicClient _anthropicClient;
     private string _systemPrompt = string.Empty;
 
-    public DiscordService(ILogger<DiscordService> logger, IServiceProvider services, IConfiguration config, DiscordSocketClient discordClient, InteractionService interactionService)
+    public DiscordService(ILogger<DiscordService> logger, IServiceProvider services, IConfiguration config, DiscordSocketClient discordClient)
     {
         _logger = logger;
         _services = services;
         _config = config;
         _discordClient = discordClient;
-        _interactionService = interactionService;
+        _interactionService = new InteractionService(_discordClient);
         _anthropicClient = new AnthropicClient(_config.GetValue<string>("ANTHROPIC_API_KEY"));
         
         _discordClient.Log += Log;
