@@ -1,4 +1,5 @@
-﻿using Discord.WebSocket;
+﻿using Discord.Interactions;
+using Discord.WebSocket;
 using FlowChat.Services.Implementations;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -14,6 +15,7 @@ class Program
         var discordConfig = new DiscordSocketConfig();
 
         builder.Services.AddSingleton(discordConfig).AddSingleton<DiscordSocketClient>();
+        builder.Services.AddSingleton<InteractionService>();
         
         // Register the manager as singleton
         builder.Services.AddSingleton<GuildContextManager>();

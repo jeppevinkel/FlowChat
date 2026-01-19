@@ -3,6 +3,7 @@ using Anthropic.SDK.Common;
 using Anthropic.SDK.Constants;
 using Anthropic.SDK.Messaging;
 using Discord;
+using Discord.Interactions;
 using Discord.WebSocket;
 using FlowChat.Models;
 using FlowChat.Tools;
@@ -19,25 +20,37 @@ public class DiscordService : IHostedService
     private readonly IServiceProvider _services;
     private readonly IConfiguration _config;
     private readonly DiscordSocketClient _discordClient;
+    private readonly InteractionService _interactionService;
     private readonly Dictionary<ulong, ChannelContext> _channelContexts = new();
     private readonly AnthropicClient _anthropicClient;
     private string _systemPrompt = string.Empty;
 
-    public DiscordService(ILogger<DiscordService> logger, IServiceProvider services, IConfiguration config, DiscordSocketClient discordClient)
+    public DiscordService(ILogger<DiscordService> logger, IServiceProvider services, IConfiguration config, DiscordSocketClient discordClient, InteractionService interactionService)
     {
         _logger = logger;
         _services = services;
         _config = config;
         _discordClient = discordClient;
+        _interactionService = interactionService;
         _anthropicClient = new AnthropicClient(_config.GetValue<string>("ANTHROPIC_API_KEY"));
         
         _discordClient.Log += Log;
-        _discordClient.Ready += () =>
+        _interactionService.Log += Log;
+
+        _discordClient.Ready += async () =>
         {
             _logger.LogInformation("Discord client is signed in as {Username}", _discordClient.CurrentUser.Username);
             
-            return Task.CompletedTask;
+            await _interactionService.AddModulesAsync(System.Reflection.Assembly.GetExecutingAssembly(), _services);
+            await _interactionService.RegisterCommandsGloballyAsync();
         };
+
+        _discordClient.InteractionCreated += async interaction =>
+        {
+            var ctx = new SocketInteractionContext(_discordClient, interaction);
+            await _interactionService.ExecuteCommandAsync(ctx, _services);
+        };
+
         _discordClient.MessageReceived += message =>
         {
             Task.Run(() => OnMessageReceived(message));
