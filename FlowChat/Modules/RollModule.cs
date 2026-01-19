@@ -23,9 +23,14 @@ public class RollModule : InteractionModuleBase<SocketInteractionContext>
     [SlashCommand("roll", "Rolls a dnd dice")]
     [IntegrationType(ApplicationIntegrationType.UserInstall)]
     [CommandContextType(InteractionContextType.BotDm, InteractionContextType.Guild, InteractionContextType.PrivateChannel)]
-    public async Task RollCommand(DiceType dice)
+    public async Task RollCommand(DiceType dice, string? reason = null)
     {
         int result = _random.Next(1, (int)dice + 1);
-        await RespondAsync($"Rolling {dice}: **{result}**");
+        string response = $"Rolling {dice}: **{result}**";
+        if (!string.IsNullOrWhiteSpace(reason))
+        {
+            response += $" for {reason}";
+        }
+        await RespondAsync(response);
     }
 }
