@@ -225,7 +225,7 @@ public class VoiceService : IAsyncDisposable, IDisposable
             {
                 try
                 {
-                    await _musicInteractionChannel.SendMessageAsync($"Now playing: [{track.Title}]({track.Url})");
+                    await _musicInteractionChannel.SendMessageAsync($"Now playing: [{track.Title}](<{track.Url}>)");
                 }
                 catch (Exception e)
                 {
