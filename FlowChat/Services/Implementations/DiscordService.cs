@@ -112,7 +112,7 @@ public class DiscordService : IHostedService
         {
             Messages = channelContext.Messages,
             MaxTokens = 2048,
-            Model = AnthropicModels.Claude37Sonnet,
+            Model = AnthropicModels.Claude46Sonnet,
             Stream = false,
             Temperature = 1.0m,
             Tools = tools.ToList(),
