@@ -28,6 +28,7 @@ COPY ["FlowChat/FlowChat.csproj", "FlowChat/"]
 RUN dotnet restore "FlowChat/FlowChat.csproj"
 COPY . .
 WORKDIR "/src/FlowChat"
+COPY --from=libdave /libdave.so .
 RUN dotnet build "FlowChat.csproj" -c $BUILD_CONFIGURATION -o /app/build
 
 FROM build AS publish
@@ -38,7 +39,7 @@ FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
 USER root
-COPY --from=libdave /libdave.so /usr/local/lib/libdave.so
-RUN ldconfig
-USER $APP_UID
+#COPY --from=libdave /libdave.so /usr/local/lib/libdave.so
+#RUN ldconfig
+#USER $APP_UID
 ENTRYPOINT ["dotnet", "FlowChat.dll"]
