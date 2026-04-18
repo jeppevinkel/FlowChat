@@ -38,9 +38,9 @@ FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
 COPY --from=libdave /libdave.so .
+USER root
 RUN chmod 755 libdave.so
-#USER root
+USER $APP_UID
 #COPY --from=libdave /libdave.so /usr/local/lib/libdave.so
 #RUN ldconfig
-#USER $APP_UID
 ENTRYPOINT ["dotnet", "FlowChat.dll"]
