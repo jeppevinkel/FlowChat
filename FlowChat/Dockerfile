@@ -37,5 +37,8 @@ RUN dotnet publish "FlowChat.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:
 FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
-COPY --from=libdave /libdave.so .
+USER root
+COPY --from=libdave /libdave.so /usr/local/lib/libdave.so
+RUN ldconfig
+USER $APP_UID
 ENTRYPOINT ["dotnet", "FlowChat.dll"]
