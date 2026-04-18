@@ -39,7 +39,8 @@ WORKDIR /app
 COPY --from=publish /app/publish .
 COPY --from=libdave /libdave.so .
 USER root
-RUN chmod 755 libdave.so
+RUN chmod 755 libdave.so \
+    && ldd libdave.so  # Shows missing dependencies
 USER $APP_UID
 #COPY --from=libdave /libdave.so /usr/local/lib/libdave.so
 #RUN ldconfig
