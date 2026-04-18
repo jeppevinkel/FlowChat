@@ -28,7 +28,6 @@ COPY ["FlowChat/FlowChat.csproj", "FlowChat/"]
 RUN dotnet restore "FlowChat/FlowChat.csproj"
 COPY . .
 WORKDIR "/src/FlowChat"
-COPY --from=libdave /libdave.so .
 RUN dotnet build "FlowChat.csproj" -c $BUILD_CONFIGURATION -o /app/build
 
 FROM build AS publish
@@ -38,7 +37,9 @@ RUN dotnet publish "FlowChat.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:
 FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
-USER root
+COPY --from=libdave /libdave.so .
+RUN chmod 755 libdave.so
+#USER root
 #COPY --from=libdave /libdave.so /usr/local/lib/libdave.so
 #RUN ldconfig
 #USER $APP_UID
