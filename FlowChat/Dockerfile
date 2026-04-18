@@ -25,7 +25,10 @@ FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
 COPY ["FlowChat/FlowChat.csproj", "FlowChat/"]
-RUN dotnet restore "FlowChat/FlowChat.csproj"
+COPY ["NuGet.Config", "./"]
+RUN --mount=type=secret,id=github_token \
+    export GITHUB_TOKEN=$(cat /run/secrets/github_token) && \
+    dotnet restore "FlowChat/FlowChat.csproj" --configfile NuGet.Config
 COPY . .
 WORKDIR "/src/FlowChat"
 RUN dotnet build "FlowChat.csproj" -c $BUILD_CONFIGURATION -o /app/build
