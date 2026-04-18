@@ -14,6 +14,8 @@ class Program
 
         var discordConfig = new DiscordSocketConfig();
 
+        discordConfig.EnableVoiceDaveEncryption = true;
+
         builder.Services.AddSingleton(discordConfig).AddSingleton<DiscordSocketClient>();
         // builder.Services.AddSingleton<InteractionService>();
         
