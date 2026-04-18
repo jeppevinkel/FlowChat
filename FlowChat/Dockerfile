@@ -1,4 +1,4 @@
-﻿FROM mcr.microsoft.com/dotnet/sdk:8.0-noble AS base
+﻿FROM mcr.microsoft.com/dotnet/sdk:10.0 AS base
 USER root
 WORKDIR /app
 
@@ -14,14 +14,14 @@ USER $APP_UID
 #    mv ffmpeg-*-amd64-static/ffmpeg /app/ffmpeg && \
 #    rm -rf /app/ffmpeg-temp
 
-FROM mcr.microsoft.com/dotnet/sdk:8.0-noble AS libdave
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS libdave
 RUN apt update && apt install -y curl unzip && rm -rf /var/lib/apt/lists/*
 RUN curl -fsSL "https://github.com/discord/libdave/releases/download/v1.1.1%2Fcpp/libdave-Linux-X64-boringssl.zip" \
         -o /tmp/libdave.zip \
     && unzip /tmp/libdave.zip -d /tmp/libdave \
     && find /tmp/libdave -name "libdave.so" -exec cp {} /libdave.so \;
 
-FROM mcr.microsoft.com/dotnet/sdk:8.0-noble AS build
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
 COPY ["FlowChat/FlowChat.csproj", "FlowChat/"]
