@@ -20,6 +20,7 @@ public class VoiceService : IAsyncDisposable, IDisposable
     private IAudioClient? _voiceConnection;
     private AudioMixingService? _mixer;
     private CancellationTokenSource? _mixerCts;
+    private SocketTextChannel? _musicInteractionChannel;
     
     private readonly ConcurrentQueue<QueuedTrack> _trackQueue = new();
     private readonly SemaphoreSlim _queueSignal = new(0);
@@ -220,6 +221,17 @@ public class VoiceService : IAsyncDisposable, IDisposable
         try
         {
             _logger.LogInformation("[Guild: {GuildId}] Playing: {Title}", _guildId, track.Title);
+            if (_musicInteractionChannel is not null)
+            {
+                try
+                {
+                    await _musicInteractionChannel.SendMessageAsync($"Now playing: [{track.Title}]({track.Url})");
+                }
+                catch (Exception e)
+                {
+                    _logger.LogError(e, "[Guild: {GuildId}] Error sending message to music interaction channel", _guildId);
+                }
+            }
             
             var youtube = new YoutubeClient();
             var streamManifest = await youtube.Videos.Streams.GetManifestAsync(
@@ -321,6 +333,11 @@ public class VoiceService : IAsyncDisposable, IDisposable
     public int GetQueueLength()
     {
         return _trackQueue.Count;
+    }
+
+    public void SetMusicInteractionChannel(SocketTextChannel? channel)
+    {
+        _musicInteractionChannel = channel;
     }
 
     public async ValueTask DisposeAsync()

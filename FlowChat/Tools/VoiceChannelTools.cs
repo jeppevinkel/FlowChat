@@ -142,6 +142,7 @@ public class VoiceChannelTools
                 return errorMessage;
             }
 
+            voiceService.SetMusicInteractionChannel(_message.Channel as SocketTextChannel);
             var result = await voiceService.SearchAndQueueMusicAsync(searchQuery);
             
             _logger.LogInformation("Queued music: {Title} at position {Position}", 
@@ -169,6 +170,7 @@ public class VoiceChannelTools
                 return Task.FromResult(errorMessage);
             }
 
+            voiceService.SetMusicInteractionChannel(_message.Channel as SocketTextChannel);
             var currentTrack = voiceService.GetCurrentTrack()?.Title;
 
             if (!voiceService.SkipCurrentSong())
