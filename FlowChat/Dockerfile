@@ -1,4 +1,4 @@
-﻿FROM mcr.microsoft.com/dotnet/sdk:8.0 AS base
+﻿FROM mcr.microsoft.com/dotnet/sdk:8.0-noble AS base
 USER root
 WORKDIR /app
 
@@ -14,14 +14,14 @@ USER $APP_UID
 #    mv ffmpeg-*-amd64-static/ffmpeg /app/ffmpeg && \
 #    rm -rf /app/ffmpeg-temp
 
-FROM mcr.microsoft.com/dotnet/sdk:8.0 AS libdave
+FROM mcr.microsoft.com/dotnet/sdk:8.0-noble AS libdave
 RUN apt update && apt install -y curl unzip && rm -rf /var/lib/apt/lists/*
 RUN curl -fsSL "https://github.com/discord/libdave/releases/download/v1.1.1%2Fcpp/libdave-Linux-X64-boringssl.zip" \
         -o /tmp/libdave.zip \
     && unzip /tmp/libdave.zip -d /tmp/libdave \
     && find /tmp/libdave -name "libdave.so" -exec cp {} /libdave.so \;
 
-FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+FROM mcr.microsoft.com/dotnet/sdk:8.0-noble AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
 COPY ["FlowChat/FlowChat.csproj", "FlowChat/"]
@@ -37,11 +37,11 @@ RUN dotnet publish "FlowChat.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:
 FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
-COPY --from=libdave /libdave.so .
 USER root
-RUN chmod 755 libdave.so \
-    && ldd libdave.so  # Shows missing dependencies
+COPY --from=libdave /libdave.so /usr/local/lib/libdave.so
+RUN chmod 755 /usr/local/lib/libdave.so \
+    && ldconfig \
+    && ldd /usr/local/lib/libdave.so  # Verify deps are satisfied
+RUN ldconfig
 USER $APP_UID
-#COPY --from=libdave /libdave.so /usr/local/lib/libdave.so
-#RUN ldconfig
 ENTRYPOINT ["dotnet", "FlowChat.dll"]
