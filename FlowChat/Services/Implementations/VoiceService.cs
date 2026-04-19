@@ -225,7 +225,18 @@ public class VoiceService : IAsyncDisposable, IDisposable
             {
                 try
                 {
-                    await _musicInteractionChannel.SendMessageAsync($"Now playing: [{track.Title}](<{track.Url}>)");
+                    var durationString = "";
+                    if (track.Duration.HasValue)
+                    {
+                        // Format the duration as either HH:MM:SS or MM:SS
+                        TimeSpan duration = track.Duration.Value;
+                        var hours = duration.Hours;
+                        var minutes = duration.Minutes;
+                        var seconds = duration.Seconds;
+                        
+                        durationString = hours > 0 ? $" ({hours:D2}:{minutes:D2}:{seconds:D2})" : $" ({minutes:D2}:{seconds:D2})";
+                    }
+                    await _musicInteractionChannel.SendMessageAsync($"Now playing: [{track.Title}](<{track.Url}>){durationString}");
                 }
                 catch (Exception e)
                 {
