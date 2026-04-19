@@ -78,6 +78,11 @@ public class AudioMixingService : IDisposable
     
     public IEnumerable<string> GetActiveSourceIds() => _sources.Keys;
     
+    public long GetSourcePosition(string id)
+    {
+        return _sources.TryGetValue(id, out var source) ? source.Position : 0;
+    }
+    
     public async Task StartMixingAsync(AudioOutStream discordStream, CancellationToken ct = default)
     {
         _mixingCts = CancellationTokenSource.CreateLinkedTokenSource(ct);

@@ -6,11 +6,14 @@ public class AudioSource : IDisposable
     public byte[] Buffer { get; }
     public float Volume { get; set; }
     
+    public long Position { get; private set; }
+    
     public AudioSource(Stream stream, float volume)
     {
         _stream = stream;
         Volume = volume;
         Buffer = new byte[3840]; // Match buffer size
+        Position = 0;
     }
     
     public async Task<int> ReadAsync(int count, CancellationToken ct)
@@ -30,6 +33,8 @@ public class AudioSource : IDisposable
             totalRead += bytesRead;
             remaining -= bytesRead;
         }
+        
+        Position += totalRead;
 
         return totalRead;
     }

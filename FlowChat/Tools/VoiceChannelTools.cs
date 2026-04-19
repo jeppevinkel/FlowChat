@@ -201,11 +201,15 @@ public class VoiceChannelTools
 
             var currentTrack = voiceService.GetCurrentTrack();
             var queuedTracks = voiceService.GetQueuedTracks();
+            var currentProgress = voiceService.GetCurrentTrackProgress();
+            var remainingQueueTime = voiceService.GetRemainingQueueTime();
             
             object responseObject = new
             {
                 CurrentTrack = currentTrack,
-                QueuedTracks = queuedTracks
+                CurrentProgress = currentProgress,
+                QueuedTracks = queuedTracks,
+                TotalRemainingQueueTime = remainingQueueTime
             };
             
             return Task.FromResult(JsonSerializer.Serialize(responseObject, _jsonOptions));

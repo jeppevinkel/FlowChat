@@ -351,6 +351,38 @@ public class VoiceService : IAsyncDisposable, IDisposable
         _musicInteractionChannel = channel;
     }
 
+    public TimeSpan GetCurrentTrackProgress()
+    {
+        if (_mixer == null || !IsMusicPlaying) return TimeSpan.Zero;
+        
+        long position = _mixer.GetSourcePosition(MusicSourceId);
+        // 48kHz, 16-bit, stereo PCM = 192,000 bytes per second
+        return TimeSpan.FromSeconds((double)position / 192000);
+    }
+
+    public TimeSpan GetRemainingQueueTime()
+    {
+        var remainingTime = TimeSpan.Zero;
+        
+        if (_currentTrack?.Duration != null)
+        {
+            var currentProgress = GetCurrentTrackProgress();
+            var remainingInCurrent = _currentTrack.Duration.Value - currentProgress;
+            if (remainingInCurrent > TimeSpan.Zero)
+                remainingTime += remainingInCurrent;
+        }
+
+        foreach (var track in _trackQueue)
+        {
+            if (track.Duration != null)
+            {
+                remainingTime += track.Duration.Value;
+            }
+        }
+
+        return remainingTime;
+    }
+
     public async ValueTask DisposeAsync()
     {
         await DisconnectAsync();
