@@ -62,7 +62,7 @@ public class VoiceService : IAsyncDisposable, IDisposable
         {
             _guild = _discordClient.GetGuild(_guildId);
             _voiceChannel = _guild.GetVoiceChannel(channelId);
-            _voiceConnection = await _voiceChannel.ConnectAsync();
+            _voiceConnection = await _voiceChannel.ConnectAsync(selfDeaf: true);
             
             await StartMixerAsync();
             StartQueueProcessor();
