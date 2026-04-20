@@ -59,14 +59,9 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Bump prerelease version and push tag
-        uses: anothrNick/github-tag-action@1.67.0
-        id: tag
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          WITH_V: false
-          DEFAULT_BUMP: patch
-          PRERELEASE: true
+      - name: Get short SHA
+        id: sha
+        run: echo "tag=dev.$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
 
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v4
@@ -81,7 +76,7 @@ jobs:
             --secret id=github_token,env=GITHUB_TOKEN \
             --file FlowChat/Dockerfile \
             --tag ghcr.io/jeppevinkel/flow-chat:latest-dev \
-            --tag ghcr.io/jeppevinkel/flow-chat:${{ steps.tag.outputs.new_tag }} \
+            --tag ghcr.io/jeppevinkel/flow-chat:${{ steps.sha.outputs.tag }} \
             .
           docker push --all-tags ghcr.io/jeppevinkel/flow-chat
         env:
