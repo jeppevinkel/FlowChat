@@ -3,3 +3,18 @@ obj/
 /packages/
 riderModule.iml
 /_ReSharper.Caches/
+
+# Secrets
+.env
+
+# IDE
+.idea/
+*.DotSettings.user
+
+# Native DLLs
+*.dll
+
+# Runtime data
+memories/
+qdrant-storage/
+config/
