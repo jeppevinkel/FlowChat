@@ -1,5 +1,6 @@
 ﻿using Discord;
 using Discord.Interactions;
+using FlowChat.Helpers;
 
 namespace FlowChat.Modules;
 
@@ -36,33 +37,25 @@ public class RollModule : InteractionModuleBase<SocketInteractionContext>
         [Summary(description: "Roll with advantage or disadvantage")] RollType type = RollType.Normal)
     {
         int firstRoll = _random.Next(1, (int)dice + 1);
+        int? secondRoll = null;
         int result = firstRoll;
-        string rollDetails = $"**{firstRoll}**";
 
-        if (type != RollType.Normal)
+        switch (type)
         {
-            int secondRoll = _random.Next(1, (int)dice + 1);
-            if (type == RollType.Advantage)
-            {
-                result = Math.Max(firstRoll, secondRoll);
-            }
-            else
-            {
-                result = Math.Min(firstRoll, secondRoll);
-            }
-            rollDetails = $"({firstRoll}, {secondRoll}) -> **{result}**";
+            case RollType.Normal:
+                break;
+            case RollType.Advantage:
+                secondRoll = _random.Next(1, (int)dice + 1);
+                result = Math.Max(firstRoll, secondRoll.Value);
+                break;
+            case RollType.Disadvantage:
+                secondRoll = _random.Next(1, (int)dice + 1);
+                result = Math.Min(firstRoll, secondRoll.Value);
+                break;
         }
 
-        string response = $"Rolling {dice} with {type}: {rollDetails}";
-        if (type == RollType.Normal)
-        {
-            response = $"Rolling {dice}: {rollDetails}";
-        }
-
-        if (!string.IsNullOrWhiteSpace(reason))
-        {
-            response += $" for {reason}";
-        }
-        await RespondAsync(response);
+        Embed responseEmbed = EmbedFactory.CreateDiceRollEmbed(dice.ToString(), result, (int) dice, firstRoll, secondRoll, reason: reason,
+            rollerName: Context.User.Username, rollTypeName: type == RollType.Normal ? null : type.ToString());
+        await RespondAsync(embed: responseEmbed);
     }
 }
