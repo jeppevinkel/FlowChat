@@ -2,6 +2,7 @@
 using Anthropic.SDK.Common;
 using Discord.WebSocket;
 using FlowChat.Enums;
+using FlowChat.Helpers;
 using FlowChat.Models;
 
 namespace FlowChat.Tools;
@@ -12,8 +13,8 @@ public class MemoryManager
     private readonly ISocketMessageChannel _channel;
     private readonly List<Memory> _memories;
     private bool _initialized = false;
-    
-    private readonly JsonSerializerOptions _jsonOptions = new()
+
+    private static readonly JsonSerializerOptions FileJsonOptions = new()
     {
         WriteIndented = true,
         Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
@@ -74,7 +75,7 @@ public class MemoryManager
         _memories.Add(memory);
         await SaveMemories();
     
-        return $"Memory stored with {memory.Keywords.Count} keywords extracted.";
+        return ToolResult.Success($"Memory stored with {memory.Keywords.Count} keywords extracted.");
     }
     
     [Function(
@@ -106,10 +107,10 @@ public class MemoryManager
 
         if (topMemories.Count == 0)
         {
-            return "No relevant memories found.";
+            return ToolResult.Success("No relevant memories found.");
         }
 
-        return JsonSerializer.Serialize(topMemories, _jsonOptions);
+        return ToolResult.Success(topMemories);
     }
     
     private int CalculateRelevanceScore(Memory memory, string[] keywords, MemoryType? memoryType = null)
@@ -200,7 +201,7 @@ public class MemoryManager
         if (privateMemories.Count != 0)
         {
             Directory.CreateDirectory("./memories/private/");
-            var privateJson = JsonSerializer.Serialize(privateMemories, _jsonOptions);
+            var privateJson = JsonSerializer.Serialize(privateMemories, FileJsonOptions);
             await File.WriteAllTextAsync(PrivateFilePath, privateJson);
         }
         
@@ -219,7 +220,7 @@ public class MemoryManager
             existingPublic.AddRange(publicMemories);
         
             Directory.CreateDirectory("./memories/public/");
-            var publicJson = JsonSerializer.Serialize(existingPublic, _jsonOptions);
+            var publicJson = JsonSerializer.Serialize(existingPublic, FileJsonOptions);
             await File.WriteAllTextAsync(PublicFilePath, publicJson);
         }
     }
