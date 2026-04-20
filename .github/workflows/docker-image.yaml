@@ -6,6 +6,10 @@ on:
       - master
       - develop
       - "feature/**"
+  pull_request:
+    branches:
+      - master
+      - develop
   release:
     types: [published]
 
@@ -158,3 +162,18 @@ jobs:
         if: ${{ env.webhook_url != '' }}
         env:
           webhook_url: ${{ secrets.CONTAINER_PROD_WEBHOOK }}
+          
+  validate-pr:
+    name: Validate PR
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@v6
+      - name: Build
+        run: |
+          docker build \
+            --secret id=github_token,env=GITHUB_TOKEN \
+            --file FlowChat/Dockerfile \
+            .
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
