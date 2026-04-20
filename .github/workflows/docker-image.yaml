@@ -2,51 +2,159 @@ name: Docker Image CI
 
 on:
   push:
-    branches: [ "master", "develop" ]
+    branches:
+      - master
+      - develop
+      - "feature/**"
+  release:
+    types: [published]
 
 jobs:
-  build:
-    name: Build & Publish
+  # No latest tag - safe for testing individual features
+  build-feature:
+    name: Build Feature Branch
     runs-on: ubuntu-latest
-
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/heads/feature/')
     steps:
-    - uses: actions/checkout@v6
-      with:
-        ref: ${{ github.sha }}
-        fetch-depth: 0
-    - name: Extract branch name
-      shell: bash
-      run: echo "branch=${GITHUB_HEAD_REF:-${GITHUB_REF#refs/heads/}}" >> $GITHUB_OUTPUT
-      id: extract_branch
-    - name: Bump version and push tag
-      uses: anothrNick/github-tag-action@1.67.0
-      id: tag
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        WITH_V: false
-        DEFAULT_BUMP: patch
-        PRERELEASE: ${{steps.extract_branch.outputs.branch != 'master' && true || false }}
-    - name: Login to GitHub Container Registry
-      uses: docker/login-action@v3
-      with:
-        registry: ghcr.io
-        username: ${{ github.actor }}
-        password: ${{ secrets.GITHUB_TOKEN }}
-    - name: Build and Publish the Docker image
-      run: |
-              label=$(date +%s)
-              latest_tag="${{steps.extract_branch.outputs.branch == 'master' && '--tag ghcr.io/jeppevinkel/flow-chat:latest' || '--tag ghcr.io/jeppevinkel/flow-chat:latest-dev'}}"
-              docker build --secret id=github_token,env=GITHUB_TOKEN . --file FlowChat/Dockerfile $latest_tag --tag ghcr.io/jeppevinkel/flow-chat:${{steps.tag.outputs.new_tag}}
-              docker push --all-tags ghcr.io/jeppevinkel/flow-chat
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-    - name: Trigger Dev Container Recreation
-      uses: distributhor/workflow-webhook@v3
-      if: ${{ steps.extract_branch.outputs.branch == 'develop' && env.webhook_url != '' }}
-      env:
-        webhook_url: ${{ secrets.CONTAINER_DEV_WEBHOOK }}
-    - name: Trigger Prod Container Recreation
-      uses: distributhor/workflow-webhook@v3
-      if: ${{ steps.extract_branch.outputs.branch == 'master' && env.webhook_url != '' }}
-      env:
-        webhook_url: ${{ secrets.CONTAINER_PROD_WEBHOOK }}
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Sanitize branch name
+        id: branch
+        shell: bash
+        run: |
+          branch="${GITHUB_REF#refs/heads/}"
+          echo "tag=${branch//\//-}" >> $GITHUB_OUTPUT
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and Push Feature Image
+        run: |
+          docker build \
+            --secret id=github_token,env=GITHUB_TOKEN \
+            --file FlowChat/Dockerfile \
+            --tag ghcr.io/jeppevinkel/flow-chat:${{ steps.branch.outputs.tag }} \
+            .
+          docker push --all-tags ghcr.io/jeppevinkel/flow-chat
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # Prerelease semver + latest-dev, triggers dev webhook
+  build-develop:
+    name: Build Develop Branch
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/develop'
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Bump prerelease version and push tag
+        uses: anothrNick/github-tag-action@1.67.0
+        id: tag
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          WITH_V: false
+          DEFAULT_BUMP: patch
+          PRERELEASE: true
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and Push Dev Image
+        run: |
+          docker build \
+            --secret id=github_token,env=GITHUB_TOKEN \
+            --file FlowChat/Dockerfile \
+            --tag ghcr.io/jeppevinkel/flow-chat:latest-dev \
+            --tag ghcr.io/jeppevinkel/flow-chat:${{ steps.tag.outputs.new_tag }} \
+            .
+          docker push --all-tags ghcr.io/jeppevinkel/flow-chat
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Trigger Dev Container Recreation
+        uses: distributhor/workflow-webhook@v3
+        if: ${{ env.webhook_url != '' }}
+        env:
+          webhook_url: ${{ secrets.CONTAINER_DEV_WEBHOOK }}
+
+  # Staging image to verify before cutting an official GitHub release
+  build-master:
+    name: Build Release Candidate
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and Push RC Image
+        run: |
+          docker build \
+            --secret id=github_token,env=GITHUB_TOKEN \
+            --file FlowChat/Dockerfile \
+            --tag ghcr.io/jeppevinkel/flow-chat:rc \
+            .
+          docker push --all-tags ghcr.io/jeppevinkel/flow-chat
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # Only latest gets updated when you deliberately publish a GitHub release
+  release:
+    name: Publish Release
+    runs-on: ubuntu-latest
+    if: github.event_name == 'release'
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Extract version from release tag
+        id: version
+        shell: bash
+        run: |
+          tag="${{ github.event.release.tag_name }}"
+          echo "tag=${tag#v}" >> $GITHUB_OUTPUT
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and Push Release Image
+        run: |
+          docker build \
+            --secret id=github_token,env=GITHUB_TOKEN \
+            --file FlowChat/Dockerfile \
+            --tag ghcr.io/jeppevinkel/flow-chat:latest \
+            --tag ghcr.io/jeppevinkel/flow-chat:${{ steps.version.outputs.tag }} \
+            .
+          docker push --all-tags ghcr.io/jeppevinkel/flow-chat
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Trigger Prod Container Recreation
+        uses: distributhor/workflow-webhook@v3
+        if: ${{ env.webhook_url != '' }}
+        env:
+          webhook_url: ${{ secrets.CONTAINER_PROD_WEBHOOK }}
