@@ -287,7 +287,7 @@ public class VoiceService : IAsyncDisposable, IDisposable
             
             // Add to mixer with high volume (plays over music)
             await _mixer.AddSourceAsync(TtsSourceId, inputStream, volume: _ttsVolume, cancellationToken);
-            await _mixer.WaitForSourceCompletionAsync(TtsSourceId);
+            // await _mixer.WaitForSourceCompletionAsync(TtsSourceId);
         }
         catch (OperationCanceledException)
         {
