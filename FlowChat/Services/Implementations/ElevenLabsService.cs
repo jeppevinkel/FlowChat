@@ -25,7 +25,8 @@ public class ElevenLabsService
 
     public async Task<Voice> GetVoice()
     {
-        _voice ??= await _elevenLabsClient.VoicesEndpoint.GetVoiceAsync("21m00Tcm4TlvDq8ikWAM");
+        string voiceId = _config.GetValue<string>("ELEVENLABS_VOICE_ID") ?? "21m00Tcm4TlvDq8ikWAM";
+        _voice ??= await _elevenLabsClient.VoicesEndpoint.GetVoiceAsync(voiceId);
 
         return _voice;
     }
