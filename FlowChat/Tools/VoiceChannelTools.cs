@@ -140,11 +140,9 @@ public class VoiceChannelTools
             var result = await voiceService.SearchAndQueueMusicAsync(searchQuery);
 
             _logger.LogInformation("Queued music: {Title} at position {Position}",
-                result.Title, result.QueuePosition);
+                result.QueuedTrack.Title, result.QueuePosition);
 
-            return result.QueuePosition == 0
-                ? ToolResult.Success($"Now playing: {result.Title}")
-                : ToolResult.Success($"Added to queue (position {result.QueuePosition}): {result.Title}");
+            return ToolResult.Success(result);
         }
         catch (Exception e)
         {

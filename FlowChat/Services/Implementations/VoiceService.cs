@@ -208,7 +208,7 @@ public class VoiceService : IAsyncDisposable, IDisposable
         
         return new SongSearchResult
         {
-            Title = result.Title,
+            QueuedTrack = track,
             QueuePosition = _trackQueue.Count - 1 + (IsMusicPlaying ? 1 : 0)
         };
     }
@@ -397,7 +397,7 @@ public class VoiceService : IAsyncDisposable, IDisposable
 
     public class SongSearchResult
     {
-        public string Title { get; init; } = string.Empty;
+        public required QueuedTrack QueuedTrack { get; init; }
         public int QueuePosition { get; init; }
     }
 }
